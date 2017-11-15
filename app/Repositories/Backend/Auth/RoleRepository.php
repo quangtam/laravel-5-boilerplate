@@ -15,9 +15,12 @@ use App\Events\Backend\Auth\Role\RoleUpdated;
 class RoleRepository extends BaseRepository
 {
     /**
-     * @var string
+     * @return string
      */
-    protected $model = Role::class;
+    public function model()
+    {
+        return Role::class;
+    }
 
     /**
      * @param array $data
@@ -57,18 +60,17 @@ class RoleRepository extends BaseRepository
     }
 
     /**
-     * @param mixed $id
+     * @param Role  $role
      * @param array $data
      *
      * @return mixed
      * @throws GeneralException
      */
-    public function update($id, array $data)
+    public function update(Role $role, array $data)
     {
-        if ($id == 1) {
+        if ($role->isAdmin()) {
             throw new GeneralException('You can not edit the administrator role.');
         }
-        $role = Role::findOrFail($id);
 
         // If the name is changing make sure it doesn't already exist
         if ($role->name != $data['name']) {
@@ -108,6 +110,8 @@ class RoleRepository extends BaseRepository
      */
     protected function roleExists($name)
     {
-        return $this->model->where('name', $name)->count() > 0;
+        return $this->model
+                ->where('name', $name)
+                ->count() > 0;
     }
 }

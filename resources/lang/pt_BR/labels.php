@@ -17,7 +17,7 @@ return [
         'all'     => 'Todos',
         'yes'     => 'Sim',
         'no'      => 'Não',
-        'custom'  => 'Custom', // TODO TRANSLATION
+        'custom'  => 'Personalizado',
         'actions' => 'Ações',
         'active'  => 'Ativo',
         'buttons' => [
@@ -103,8 +103,8 @@ return [
         ],
 
         'contact' => [
-            'box_title' => 'Contact Us',
-            'button' => 'Send Information',
+            'box_title' => 'Contato',
+            'button' => 'Enviar',
         ],
 
         'passwords' => [
@@ -112,6 +112,28 @@ return [
             'reset_password_box_title'        => 'Resetar Senha',
             'reset_password_button'           => 'Resetar Senha',
             'send_password_reset_link_button' => 'Enviar link para redefinição de senha',
+        ],
+
+        'macros' => [
+            'country' => [
+                'alpha'   => 'Códigos de País Alpha',
+                'alpha2'  => 'Códigos de País Alpha 2',
+                'alpha3'  => 'Códigos de País Alpha 3',
+                'numeric' => 'Códigos Numéricos País',
+            ],
+            'macro_examples' => 'Exemplo de Macros',
+            'state'          => [
+                'mexico' => 'Lista de Estados do México',
+                'us'     => [
+                    'us'       => 'Lista de estados dos EUA',
+                    'outlying' => 'Territórios Distantes EUA',
+                    'armed'    => 'Forças Armadas dos EUA',
+                ],
+            ],
+            'territories' => [
+                'canada' => 'Província do Canadá e Lista de Territórios',
+            ],
+            'timezone' => 'Fuso horário',
         ],
 
         'user' => [

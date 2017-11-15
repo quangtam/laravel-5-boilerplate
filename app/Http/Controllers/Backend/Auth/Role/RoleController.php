@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Backend\Auth\Role;
 
-use Spatie\Permission\Models\Role;
+use App\Models\Auth\Role;
 use App\Http\Controllers\Controller;
 use App\Events\Backend\Auth\Role\RoleDeleted;
 use App\Repositories\Backend\Auth\RoleRepository;
@@ -81,8 +81,8 @@ class RoleController extends Controller
      */
     public function edit(Role $role, ManageRoleRequest $request)
     {
-        if ($role->id == 1) {
-            return redirect()->back()->withFlashDanger('You can not edit the administrator role.');
+        if ($role->isAdmin()) {
+            return redirect()->route('admin.auth.role.index')->withFlashDanger('You can not edit the administrator role.');
         }
 
         return view('backend.auth.role.edit')
@@ -99,7 +99,7 @@ class RoleController extends Controller
      */
     public function update(Role $role, UpdateRoleRequest $request)
     {
-        $this->roleRepository->update($role->id, $request->only('name', 'permissions'));
+        $this->roleRepository->update($role, $request->only('name', 'permissions'));
 
         return redirect()->route('admin.auth.role.index')->withFlashSuccess(__('alerts.backend.roles.updated'));
     }
@@ -112,8 +112,8 @@ class RoleController extends Controller
      */
     public function destroy(Role $role, ManageRoleRequest $request)
     {
-        if ($role->id == 1) {
-            return redirect()->back()->withFlashDanger('You can not delete the administrator role.');
+        if ($role->isAdmin()) {
+            return redirect()->route('admin.auth.role.index')->withFlashDanger('You can not delete the administrator role.');
         }
 
         $this->roleRepository->deleteById($role->id);

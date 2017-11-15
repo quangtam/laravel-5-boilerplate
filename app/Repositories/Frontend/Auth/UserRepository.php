@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Frontend\Auth;
 
+use Carbon\Carbon;
 use App\Models\Auth\User;
 use App\Models\Auth\SocialAccount;
 use Illuminate\Support\Facades\DB;
@@ -18,9 +19,12 @@ use App\Notifications\Frontend\Auth\UserNeedsConfirmation;
 class UserRepository extends BaseRepository
 {
     /**
-     * @var string
+     * @return string
      */
-    protected $model = User::class;
+    public function model()
+    {
+        return User::class;
+    }
 
     /**
      * @param $token
@@ -31,7 +35,7 @@ class UserRepository extends BaseRepository
     {
         foreach (DB::table(config('auth.passwords.users.table'))->get() as $row) {
             if (password_verify($token, $row->token)) {
-                return $this->getItemByColumn($row->email, 'email');
+                return $this->getByColumn($row->email, 'email');
             }
         }
 
@@ -122,23 +126,48 @@ class UserRepository extends BaseRepository
     }
 
     /**
-     * @param mixed $id
+     * @param       $id
      * @param array $input
+     * @param bool  $image
      *
      * @return array|bool
      * @throws GeneralException
      */
-    public function update($id, array $input)
+    public function update($id, array $input, $image = false)
     {
         $user = $this->getById($id);
         $user->first_name = $input['first_name'];
         $user->last_name = $input['last_name'];
+        $user->timezone = $input['timezone'];
+        $user->avatar_type = $input['avatar_type'];
+
+        // Upload profile image if necessary
+        if ($image) {
+            $name = md5(uniqid(mt_rand(), true)).'.'.$image->getClientOriginalExtension();
+            $image->move(public_path('img/frontend/user'), $name);
+            $user->avatar_location = 'img/frontend/user/'.$name;
+        } else {
+            // No image being passed
+            if ($input['avatar_type'] == 'storage') {
+                // If there is no existing image
+                if (! strlen(auth()->user()->avatar_location)) {
+                    throw new GeneralException('You must supply a profile image.');
+                }
+            } else {
+                // If there is a current image, and they are not using it anymore, get rid of it
+                if (strlen(auth()->user()->avatar_location)) {
+                    unlink(public_path(auth()->user()->avatar_location));
+                }
+
+                $user->avatar_location = null;
+            }
+        }
 
         if ($user->canChangeEmail()) {
             //Address is not current address so they need to reconfirm
             if ($user->email != $input['email']) {
                 //Emails have to be unique
-                if ($this->getItemByColumn($input['email'], 'email')) {
+                if ($this->getByColumn($input['email'], 'email')) {
                     throw new GeneralException(__('exceptions.frontend.auth.email_taken'));
                 }
 
@@ -162,17 +191,22 @@ class UserRepository extends BaseRepository
     }
 
     /**
-     * @param $input
+     * @param      $input
+     * @param bool $expired
      *
      * @return bool
      * @throws GeneralException
      */
-    public function updatePassword($input)
+    public function updatePassword($input, $expired = false)
     {
         $user = $this->getById(auth()->id());
 
         if (Hash::check($input['old_password'], $user->password)) {
             $user->password = bcrypt($input['password']);
+
+            if ($expired) {
+                $user->password_changed_at = Carbon::now()->toDateTimeString();
+            }
 
             return $user->save();
         }
@@ -218,7 +252,7 @@ class UserRepository extends BaseRepository
         $user_email = $data->email ?: "{$data->id}@{$provider}.com";
 
         // Check to see if there is a user with this email first.
-        $user = $this->getItemByColumn($user_email, 'email');
+        $user = $this->getByColumn($user_email, 'email');
 
         /*
          * If the user does not exist create them

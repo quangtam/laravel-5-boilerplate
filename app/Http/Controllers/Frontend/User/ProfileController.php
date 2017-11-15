@@ -14,16 +14,16 @@ class ProfileController extends Controller
     /**
      * @var UserRepository
      */
-    protected $user;
+    protected $userRepository;
 
     /**
      * ProfileController constructor.
      *
-     * @param UserRepository $user
+     * @param UserRepository $userRepository
      */
-    public function __construct(UserRepository $user)
+    public function __construct(UserRepository $userRepository)
     {
-        $this->user = $user;
+        $this->userRepository = $userRepository;
     }
 
     /**
@@ -33,7 +33,11 @@ class ProfileController extends Controller
      */
     public function update(UpdateProfileRequest $request)
     {
-        $output = $this->user->update($request->user()->id, $request->only('first_name', 'last_name', 'email'));
+        $output = $this->userRepository->update(
+            $request->user()->id,
+            $request->only('first_name', 'last_name', 'email', 'avatar_type', 'avatar_location', 'timezone'),
+            $request->has('avatar_location') ? $request->file('avatar_location') : false
+        );
 
         // E-mail address was updated, user has to reconfirm
         if (is_array($output) && $output['email_changed']) {

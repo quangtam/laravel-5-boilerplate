@@ -22,10 +22,14 @@ class CreateUsersTable extends Migration
             $table->string('first_name');
             $table->string('last_name');
             $table->string('email')->unique();
+            $table->string('avatar_type')->default('gravatar');
+            $table->string('avatar_location')->nullable();
             $table->string('password')->nullable();
+            $table->timestamp('password_changed_at')->nullable();
             $table->tinyInteger('active')->default(1)->unsigned();
             $table->string('confirmation_code')->nullable();
             $table->boolean('confirmed')->default(config('access.users.confirm_email') ? false : true);
+            $table->string('timezone')->default('UTC');
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();

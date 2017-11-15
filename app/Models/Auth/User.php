@@ -6,6 +6,7 @@ use App\Models\Traits\Uuid;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Notifications\Notifiable;
 use App\Models\Auth\Traits\Scope\UserScope;
+use App\Models\Auth\Traits\Method\UserMethod;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Auth\Traits\SendUserPasswordReset;
 use App\Models\Auth\Traits\Attribute\UserAttribute;
@@ -22,6 +23,7 @@ class User extends Authenticatable
         SendUserPasswordReset,
         SoftDeletes,
         UserAttribute,
+        UserMethod,
         UserRelationship,
         UserScope,
         Uuid;
@@ -31,7 +33,19 @@ class User extends Authenticatable
      *
      * @var array
      */
-    protected $fillable = ['first_name', 'last_name', 'email', 'password', 'active', 'confirmation_code', 'confirmed'];
+    protected $fillable = [
+        'first_name',
+        'last_name',
+        'email',
+        'avatar_type',
+        'avatar_location',
+        'password',
+        'password_changed_at',
+        'active',
+        'confirmation_code',
+        'confirmed',
+        'timezone',
+    ];
 
     /**
      * The attributes that should be hidden for arrays.

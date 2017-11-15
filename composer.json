@@ -1,7 +1,7 @@
 {
     "name": "rappasoft/laravel-5-boilerplate",
     "description": "The Laravel Boilerplate Project.",
-    "keywords": ["framework", "laravel"],
+    "keywords": ["framework", "laravel", "boilerplate"],
     "license": "MIT",
     "type": "project",
     "require": {
@@ -16,6 +16,7 @@
         "laravel/framework": "5.5.*",
         "laravel/socialite": "^3.0",
         "laravel/tinker": "~1.0",
+        "renatomarinho/laravel-page-speed": "^1.8",
         "spatie/laravel-html": "^2.4",
         "spatie/laravel-permission": "^2.5",
         "webpatser/laravel-uuid": "^3.0"
@@ -24,7 +25,7 @@
         "barryvdh/laravel-debugbar": "^3.0",
         "filp/whoops": "~2.0",
         "fzaninotto/faker": "~1.4",
-        "laravel/dusk": "^2.0",
+        "laravel/browser-kit-testing": "^2.0",
         "mockery/mockery": "~1.0",
         "phpunit/phpunit": "~6.0"
     },
@@ -70,6 +71,9 @@
             "@php artisan route:clear",
             "@php artisan view:clear",
             "@php artisan config:clear"
+        ],
+        "phpunit": [
+            "phpunit > output.txt -d memory_limit=2048M"
         ]
     },
     "config": {

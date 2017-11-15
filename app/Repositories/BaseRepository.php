@@ -2,12 +2,12 @@
 
 namespace App\Repositories;
 
+use App\Exceptions\GeneralException;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
- * Modeled after https://github.com/kylenoland/laravel-base-repository.
- *
- * Class BaseRepository
+ * Class BaseRepository.
  */
 abstract class BaseRepository implements RepositoryContract
 {
@@ -72,19 +72,43 @@ abstract class BaseRepository implements RepositoryContract
      */
     public function __construct()
     {
-        $this->model = app()->make($this->model);
+        $this->makeModel();
+    }
+
+    /**
+     * Specify Model class name.
+     *
+     * @return mixed
+     */
+    abstract public function model();
+
+    /**
+     * @return Model|mixed
+     * @throws GeneralException
+     */
+    public function makeModel()
+    {
+        $model = app()->make($this->model());
+
+        if (! $model instanceof Model) {
+            throw new GeneralException("Class {$this->model()} must be an instance of ".Model::class);
+        }
+
+        return $this->model = $model;
     }
 
     /**
      * Get all the model records in the database.
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @param array $columns
+     *
+     * @return Collection|static[]
      */
-    public function all()
+    public function all(array $columns = ['*'])
     {
         $this->newQuery()->eagerLoad();
 
-        $models = $this->query->get();
+        $models = $this->query->get($columns);
 
         $this->unsetClauses();
 
@@ -96,7 +120,7 @@ abstract class BaseRepository implements RepositoryContract
      *
      * @return int
      */
-    public function count()
+    public function count() : int
     {
         return $this->get()->count();
     }
@@ -157,7 +181,7 @@ abstract class BaseRepository implements RepositoryContract
      * @return bool|null
      * @throws \Exception
      */
-    public function deleteById($id)
+    public function deleteById($id) : bool
     {
         $this->unsetClauses();
 
@@ -171,7 +195,7 @@ abstract class BaseRepository implements RepositoryContract
      *
      * @return int
      */
-    public function deleteMultipleById(array $ids)
+    public function deleteMultipleById(array $ids) : int
     {
         return $this->model->destroy($ids);
     }
@@ -179,13 +203,15 @@ abstract class BaseRepository implements RepositoryContract
     /**
      * Get the first specified model record from the database.
      *
-     * @return \Illuminate\Database\Eloquent\Model
+     * @param array $columns
+     *
+     * @return Model|static
      */
-    public function first()
+    public function first(array $columns = ['*'])
     {
         $this->newQuery()->eagerLoad()->setClauses()->setScopes();
 
-        $model = $this->query->firstOrFail();
+        $model = $this->query->firstOrFail($columns);
 
         $this->unsetClauses();
 
@@ -195,34 +221,15 @@ abstract class BaseRepository implements RepositoryContract
     /**
      * Get all the specified model records in the database.
      *
-     * @param $cols
-     * @return \Illuminate\Database\Eloquent\Collection
-     */
-    public function get($cols = false)
-    {
-        $this->newQuery()->eagerLoad()->setClauses()->setScopes();
-
-        if (is_array($cols)) {
-            $models = $this->query->get($cols);
-        } else {
-            $models = $this->query->get();
-        }
-
-        $this->unsetClauses();
-
-        return $models;
-    }
-
-    /**
-     * @param int $limit
+     * @param array $columns
      *
-     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     * @return Collection|static[]
      */
-    public function paginate($limit = 25)
+    public function get(array $columns = ['*'])
     {
         $this->newQuery()->eagerLoad()->setClauses()->setScopes();
 
-        $models = $this->query->paginate($limit);
+        $models = $this->query->get($columns);
 
         $this->unsetClauses();
 
@@ -232,32 +239,73 @@ abstract class BaseRepository implements RepositoryContract
     /**
      * Get the specified model record from the database.
      *
-     * @param $id
+     * @param       $id
+     * @param array $columns
      *
-     * @return \Illuminate\Database\Eloquent\Model
+     * @return Collection|Model
      */
-    public function getById($id)
+    public function getById($id, array $columns = ['*'])
     {
         $this->unsetClauses();
 
         $this->newQuery()->eagerLoad();
 
-        return $this->query->findOrFail($id);
+        return $this->query->findOrFail($id, $columns);
     }
 
     /**
-     * @param $item
-     * @param $column
+     * @param       $item
+     * @param       $column
+     * @param array $columns
      *
-     * @return \Illuminate\Database\Eloquent\Model|null|static
+     * @return Model|null|static
      */
-    public function getItemByColumn($item, $column)
+    public function getByColumn($item, $column, array $columns = ['*'])
     {
         $this->unsetClauses();
 
         $this->newQuery()->eagerLoad();
 
-        return $this->query->where($column, $item)->first();
+        return $this->query->where($column, $item)->first($columns);
+    }
+
+    /**
+     * @param int    $limit
+     * @param array  $columns
+     * @param string $pageName
+     * @param null   $page
+     *
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public function paginate($limit = 25, array $columns = ['*'], $pageName = 'page', $page = null)
+    {
+        $this->newQuery()->eagerLoad()->setClauses()->setScopes();
+
+        $models = $this->query->paginate($limit, $columns, $pageName, $page);
+
+        $this->unsetClauses();
+
+        return $models;
+    }
+
+    /**
+     * Update the specified model record in the database.
+     *
+     * @param       $id
+     * @param array $data
+     * @param array $options
+     *
+     * @return Collection|Model
+     */
+    public function updateById($id, array $data, array $options = [])
+    {
+        $this->unsetClauses();
+
+        $model = $this->getById($id);
+
+        $model->update($data, $options);
+
+        return $model;
     }
 
     /**
@@ -286,25 +334,6 @@ abstract class BaseRepository implements RepositoryContract
         $this->orderBys[] = compact('column', 'direction');
 
         return $this;
-    }
-
-    /**
-     * Update the specified model record in the database.
-     *
-     * @param       $id
-     * @param array $data
-     *
-     * @return \Illuminate\Database\Eloquent\Model
-     */
-    public function updateById($id, array $data)
-    {
-        $this->unsetClauses();
-
-        $model = $this->getById($id);
-
-        $model->update($data);
-
-        return $model;
     }
 
     /**
